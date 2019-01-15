@@ -13,12 +13,18 @@ import { IProduct } from './product';
 export class ProductService {
     private productsUrl = 'api/products';
 
+    private products: IProduct[];
+
     constructor(private http: HttpClient) { }
 
     getProducts(): Observable<IProduct[]> {
+        if(this.products)
+            return of(this.products)
+
         return this.http.get<IProduct[]>(this.productsUrl)
                         .pipe(
                             tap(data => console.log(JSON.stringify(data))),
+                            tap(data=>this.products=data),
                             catchError(this.handleError)
                         );
     }
@@ -27,6 +33,14 @@ export class ProductService {
         if (id === 0) {
             return of(this.initializeProduct());
         }
+
+        if(this.products){
+            const foundItem= this.products.find(item=> item.id===id);
+            if(foundItem){
+                return of(foundItem);
+            }
+        }
+
         const url = `${this.productsUrl}/${id}`;
         return this.http.get<IProduct>(url)
                         .pipe(
@@ -50,6 +64,11 @@ export class ProductService {
         return this.http.delete<IProduct>(url, { headers: headers} )
                         .pipe(
                             tap(data => console.log('deleteProduct: ' + id)),
+                            tap(data=>{
+                                const foundIndex = this.products.findIndex(item=>item.id===id);
+                                if(foundIndex>-1)
+                                    this.products.splice(foundIndex,1);
+                            }),
                             catchError(this.handleError)
                         );
     }
@@ -59,6 +78,7 @@ export class ProductService {
         return this.http.post<IProduct>(this.productsUrl, product,  { headers: headers} )
                         .pipe(
                             tap(data => console.log('createProduct: ' + JSON.stringify(data))),
+                            tap(data=>this.products.push(data)),
                             catchError(this.handleError)
                         );
     }
