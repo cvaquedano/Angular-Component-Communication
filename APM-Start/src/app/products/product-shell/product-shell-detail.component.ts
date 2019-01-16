@@ -11,6 +11,10 @@ export class ProductShellDetailComponent implements OnInit {
 
     constructor(private productService: ProductService) { }
 
+    get product():IProduct |null{
+        return this.productService.currentProduct;
+    }
+
     ngOnInit() {
     }
 
